@@ -81,9 +81,25 @@ module Reader : READER = struct
     let nt1 = caten nt_skip_star (caten nt nt_skip_star) in
     let nt1 = pack nt1 (fun (_, (e, _)) -> e) in
     nt1
-  and nt_digit str = raise X_not_yet_implemented
+  (* to show maya   *)
+  and nt_digit str =
+    let nt1 = range '0' '9' in
+    let delta = int_of_char '0' in
+    let nt1 = pack nt1 (fun ch -> int_of_char ch - delta) in
+    nt1 str
+
   and nt_hex_digit str = raise X_not_yet_implemented
-  and nt_nat str = raise X_not_yet_implemented
+  (* to show maya*)
+  and nt_nat str = 
+    let nt1 = plus nt_digit in 
+    let nt1 = pack nt1 (fun digits -> 
+                          List.fold_left
+                            (fun num digit -> 
+                              10 * num + digit)
+                              0
+                              digits) in
+    nt1 str
+
   and nt_hex_nat str = 
     let nt1 = plus nt_hex_digit in
     let nt1 = pack nt1
@@ -171,8 +187,17 @@ module Reader : READER = struct
   and nt_char_simple str =
     let nt1 = const(fun ch -> ' ' < ch) in
     let nt1 = not_followed_by nt1 nt_symbol_char in
-    nt1 str
-  and nt_char_named str = raise X_not_yet_implemented
+    nt1 str  
+  (* to show maya *)
+  and nt_char_named str = 
+    let nt1 = pack (word_ci "newline") (fun _ -> ScmChar '\n') in
+    let nt2 = pack (word_ci "nul") (fun _ -> ScmChar 'x') in
+    let nt3 = pack (word_ci "page") (fun _ -> ScmChar 'x') in
+    let nt4 = pack (word_ci "return") (fun _ -> ScmChar '\r') in
+    let nt5 = pack (word_ci "space") (fun _ -> ScmChar ' ')in
+    let nt6 = pack (word_ci "tab") (fun _ -> ScmChar '\t') in
+    let nt7 = caten_list [nt1, nt2, nt3, nt4, nt5, nt6]
+    nt7 str                  
   and nt_char_hex str =
     let nt1 = caten (char_ci 'x') nt_hex_nat in
     let nt1 = pack nt1 (fun (_, n) -> n) in
