@@ -81,15 +81,13 @@ module Reader : READER = struct
     let nt1 = caten nt_skip_star (caten nt nt_skip_star) in
     let nt1 = pack nt1 (fun (_, (e, _)) -> e) in
     nt1
-  (* to show maya   *)
   and nt_digit str =
     let nt1 = range '0' '9' in
     let delta = int_of_char '0' in
     let nt1 = pack nt1 (fun ch -> int_of_char ch - delta) in
     nt1 str
-
   and nt_hex_digit str = raise X_not_yet_implemented
-  (* to show maya*)
+  (* to fix*)
   and nt_nat str = 
     let nt1 = plus nt_digit in 
     let nt1 = pack nt1 (fun digits -> 
@@ -188,11 +186,10 @@ module Reader : READER = struct
     let nt1 = const(fun ch -> ' ' < ch) in
     let nt1 = not_followed_by nt1 nt_symbol_char in
     nt1 str  
-  (* to show maya *)
   and nt_char_named str = 
     let nt1 = pack (word_ci "newline") (fun _ -> ScmChar '\n') in
-    let nt2 = pack (word_ci "nul") (fun _ -> ScmChar 'x') in
-    let nt3 = pack (word_ci "page") (fun _ -> ScmChar 'x') in
+    let nt2 = pack (word_ci "nul") (fun _ -> ScmChar '\000') in
+    let nt3 = pack (word_ci "page") (fun _ -> ScmChar '\012') in
     let nt4 = pack (word_ci "return") (fun _ -> ScmChar '\r') in
     let nt5 = pack (word_ci "space") (fun _ -> ScmChar ' ')in
     let nt6 = pack (word_ci "tab") (fun _ -> ScmChar '\t') in
