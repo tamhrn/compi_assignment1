@@ -196,7 +196,7 @@ module Reader : READER = struct
     let nt4 = pack (word_ci "return") (fun _ -> ScmChar '\r') in
     let nt5 = pack (word_ci "space") (fun _ -> ScmChar ' ')in
     let nt6 = pack (word_ci "tab") (fun _ -> ScmChar '\t') in
-    let nt7 = caten_list [nt1, nt2, nt3, nt4, nt5, nt6]
+    let nt7 = disj_list [nt1; nt2; nt3; nt4; nt5; nt6]
     nt7 str                  
   and nt_char_hex str =
     let nt1 = caten (char_ci 'x') nt_hex_nat in
