@@ -106,7 +106,10 @@ module Reader : READER = struct
                     0
                     digits) in
     nt1 str
-  and nt_optional_sign str = raise X_not_yet_implemented
+  and nt_optional_sign str = 
+    let ntSign = disj char '+' char '-' in
+    let ntFinish = maybe ntSign in
+    ntFinish str
   and nt_int str =
     let nt1 = caten nt_optional_sign nt_nat in
     let nt1 = pack nt1
@@ -159,7 +162,17 @@ module Reader : READER = struct
       (function
        | None -> none_value
        | Some(x) -> x)
-  and nt_float str = raise X_not_yet_implemented
+  and nt_float str =
+    let ntChar = char '.' in
+    let ntA = followed_by nt_integer_part ntChar in
+    let ntA = followed_by ntA maybe nt_mantissa in
+    let ntA = followed_by ntA maybe nt_exponent in
+    let ntB = followed_by ntChar followed_by nt_mantissa maybe nt_exponent in
+    let ntC = followed_by nt_integer_part nt_exponent in
+    let ntFloat = disj_list [ntA;ntB;ntC] in
+    let ntFinish = caten nt_optional_sign ntFloat in
+    ntFinish str
+
   and nt_number str =
     let nt1 = nt_float in
     let nt2 = nt_frac in
