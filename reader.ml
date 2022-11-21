@@ -107,11 +107,11 @@ module Reader : READER = struct
                     digits) in
     nt1 str
   and nt_optional_sign str = 
-    let ntPlus = pack (char '+') (fun _ -> ScmBoolean true) in
-    let ntMinus = pack (char '-') (fun _ -> ScmBoolean false) in
-    let nt = disj ntPlus ntMinus in
-    let nt = make_maybe nt in
-    let nt = pack nt (fun v -> if (v == None) then (ScmBoolean true) else v) in
+    let ntPlus = char '+' in
+    let ntMinus = char '-' in
+    let nt = maybe (disj ntPlus ntMinus) in
+    let nt = pack nt (fun sign -> 
+                        if (sign != Some '-') then true else false) in
     nt str
   and nt_int str =
     let nt1 = caten nt_optional_sign nt_nat in
