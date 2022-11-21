@@ -107,9 +107,12 @@ module Reader : READER = struct
                     digits) in
     nt1 str
   and nt_optional_sign str = 
-    let ntSign = disj char '+' char '-' in
-    let ntFinish = maybe ntSign in
-    ntFinish str
+    let ntPlus = pack (char '+') (fun _ -> ScmBoolean true) in
+    let ntMinus = pack (char '-') (fun _ -> ScmBoolean false) in
+    let nt = disj ntPlus ntMinus in
+    let nt = make_maybe nt in
+    let nt = pack nt (fun v -> if (v == None) then (ScmBoolean true) else v) in
+    nt str
   and nt_int str =
     let nt1 = caten nt_optional_sign nt_nat in
     let nt1 = pack nt1
@@ -198,12 +201,12 @@ module Reader : READER = struct
     let nt1 = not_followed_by nt1 nt_symbol_char in
     nt1 str
   and nt_char_named str = 
-    let nt1 = pack (word_ci "newline") (fun _ ->  '\n') in
-    let nt2 = pack (word_ci "nul") (fun _ ->  '\000') in
-    let nt3 = pack (word_ci "page") (fun _ ->  '\012') in
-    let nt4 = pack (word_ci "return") (fun _ ->  '\r') in
-    let nt5 = pack (word_ci "space") (fun _ ->  ' ')in
-    let nt6 = pack (word_ci "tab") (fun _ ->  '\t') in
+    let nt1 = pack (word_ci "newline") (fun _ -> '\n') in
+    let nt2 = pack (word_ci "nul") (fun _ -> '\000') in
+    let nt3 = pack (word_ci "page") (fun _ -> '\012') in
+    let nt4 = pack (word_ci "return") (fun _ -> '\r') in
+    let nt5 = pack (word_ci "space") (fun _ -> ' ')in
+    let nt6 = pack (word_ci "tab") (fun _ -> '\t') in
     let nt7 = disj_list [nt1; nt2; nt3; nt4; nt5; nt6] in
     nt7 str
   and nt_char_hex str =
