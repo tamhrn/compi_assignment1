@@ -89,7 +89,16 @@ module Reader : READER = struct
     let delta = int_of_char '0' in
     let nt1 = pack nt1 (fun ch -> int_of_char ch - delta) in
     nt1 str
-  and nt_hex_digit str = raise X_not_yet_implemented
+  and nt_hex_digit str = 
+    let nt_digit_a_f = range 'a' 'f' in
+    let delta_a = int_of_char 'a' in
+    let nt_digit_a_f = pack nt_digit_a_f (fun a -> int_of_char a - delta_a + 10 ) in
+    let nt_digit_A_F = range 'A' 'F' in
+    let delta_A = int_of_char 'A' in
+    let nt_digit_A_F = pack nt_digit_A_F (fun a -> int_of_char a - delta_A + 10 ) in
+    let nt_digit_final = disj_list [nt_digit;nt_digit_a_f;nt_digit_A_F] in
+    nt_digit_final str 
+
   and nt_nat str = 
     let nt1 = plus nt_digit in 
     let nt1 = pack nt1 (fun digits -> 
