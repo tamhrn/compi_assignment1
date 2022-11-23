@@ -267,7 +267,15 @@ module Reader : READER = struct
     let nt1 = pack nt1 (fun (_, (n, _)) -> n) in
     let nt1 = pack nt1 char_of_int in
     nt1 str
-  and nt_string_part_dynamic str = raise X_not_yet_implemented
+  and nt_string_part_dynamic str = 
+    let nt_curly_left = caten (char '{') (star nt_whitespace) in
+    let nt_curly_right = caten (star nt_whitespace) (char '}') in
+    let nt_final = caten (char '~') nt_curly_left in
+    let nt_final = caten nt_final nt_sexpr in
+    let nt_final = caten nt_final nt_curly_right in
+    let nt_final = pack nt_final (fun ((_,exp),_) -> ScmPair (ScmSymbol "format", ScmPair (ScmString "~a", ScmPair (Dynamic exp, ScmNil)))) in
+    nt_final str
+
   and nt_string_part_static str =
     let nt1 = disj_list [nt_string_part_simple;
                          nt_string_part_meta;
