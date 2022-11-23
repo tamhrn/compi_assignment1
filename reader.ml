@@ -239,8 +239,9 @@ module Reader : READER = struct
     let nt1 = disj nt1 (disj nt2 nt3) in
     nt1 str
   and nt_symbol str = 
-      let ntSymbol = pack (plus nt_symbol_char) (fun lst -> List.fold_right (fun (a,acc) -> a :: acc ) lst "") in
-      
+    let ntSymbol = pack (plus nt_symbol_char) (fun lst -> ScmSymbol (string_of_list lst))  in
+    ntSymbol str
+
   and nt_string_part_simple str =
     let nt1 =
       disj_list [unitify (char '"'); unitify (char '\\'); unitify (word "~~");
