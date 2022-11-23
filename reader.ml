@@ -323,7 +323,17 @@ module Reader : READER = struct
                      ScmPair(ScmSymbol "string-append", argl)) in
     nt1 str
   and nt_vector str = raise X_not_yet_implemented
-  and nt_list str = raise X_not_yet_implemented
+  and nt_list str = 
+    let right_bracket = caten nt_skip_star (caten (char ')') nt_skip_star) in
+    let left_bracket = caten nt_skip_star (caten (char '(') nt_skip_star) in
+    let nt_proper = caten_list [left_bracket;star (nt_sexpr);right_bracket] in
+    let nt_proper = pack nt_proper (fun (_,sexprs,_)->List.fold_right (fun car cdr -> ScmPair(car, cdr)) sexprs ScmNil) in
+    let nt_dot = char '.' in
+    let nt_improper = caten_list [left_bracket;plus (nt_sexpr);nt_dot;nt_sexpr;right_bracket] in
+    let nt_improper = pack nt_improper (fun (_,sexprs,_,sexpr,_)-> List.fold_right (fun car cdr -> ScmPair(car, cdr)) sexprs sexpr) in
+    let nt_list_final = disj nt_proper nt_improper in
+    nt_list_final str
+    
   and make_quoted_form nt_qf qf_name =
     let nt1 = caten nt_qf nt_sexpr in
     let nt1 = pack nt1
