@@ -62,7 +62,10 @@ module Reader : READER = struct
     let nt1 = unitify nt1 in
     nt1 str
   and nt_paired_comment str = raise X_not_yet_implemented
-  and nt_sexpr_comment str = raise X_not_yet_implemented
+  and nt_sexpr_comment str = 
+    let nt1 = caten (word "#;") nt_sexpr in
+    let nt1 = pack nt1 (fun _ -> ()) in
+    nt1 str
   and nt_comment str =
     disj_list
       [nt_line_comment;
@@ -273,7 +276,7 @@ module Reader : READER = struct
     let nt_final = caten (char '~') nt_curly_left in
     let nt_final = pack (caten nt_final nt_sexpr) (fun (_,exp) -> exp) in
     let nt_final = caten nt_final nt_curly_right in
-    let nt_final = pack nt_final (fun (exp,_) ->  ScmPair(ScmSymbol "format", ScmPair(ScmString "~a", ScmPair(exp, ScmNil)))) in
+    let nt_final = pack nt_final (fun (exp,_) ->  Dynamic (ScmPair(ScmSymbol "format", ScmPair(ScmString "~a", ScmPair(exp, ScmNil))))) in
     nt_final str
 
   and nt_string_part_static str =
