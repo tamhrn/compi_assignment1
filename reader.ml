@@ -167,14 +167,24 @@ module Reader : READER = struct
        | Some(x) -> x)
   and nt_float str =
     let ntChar = char '.' in
-    let ntA = followed_by nt_integer_part ntChar in
-    let ntA = followed_by ntA maybe nt_mantissa in
-    let ntA = followed_by ntA maybe nt_exponent in
-    let ntB = followed_by ntChar followed_by nt_mantissa maybe nt_exponent in
-    let ntC = followed_by nt_integer_part nt_exponent in
+    let ntA = pack (caten nt_integer_part ntChar) (fun (num,_) -> num) in
+    let maybe_mantissa = pack (maybe nt_mantissa) (fun me ->
+      match me with
+      | None -> 0.0
+      | Some(mantisaPart) -> mantisaPart) in
+    let ntA = pack (caten ntA maybe_mantissa) (fun (intPart,mantisPart) -> intPart +. mantisPart) in
+    let maybe_exponent = pack (maybe nt_exponent) (fun me ->
+      match me with
+      | None -> 1.0
+      | Some(exponentPart) -> exponentPart) in
+    let ntA = pack (caten ntA maybe_exponent) (fun (floatNum,expPart) -> floatNum *. expPart) in
+    let ntB = pack (caten ntChar nt_mantissa) (fun (_,manPart) -> manPart) in
+    let ntB = pack (caten ntB maybe_exponent) (fun (mantPart,expoPart)-> mantPart *. expoPart) in
+    let ntC = pack (caten nt_integer_part nt_exponent) (fun (integPart,exponPart)-> integPart *. exponPart) in
     let ntFloat = disj_list [ntA;ntB;ntC] in
-    let ntFinish = caten nt_optional_sign ntFloat in
-    ntFinish str
+    let ntFloat = pack (caten nt_optional_sign ntFloat) (fun (signOpt,floatNum) ->
+      if signOpt then ScmReal floatNum else ScmReal (-.floatNum)) in
+    ntFloat str
 
   and nt_number str =
     let nt1 = nt_float in
