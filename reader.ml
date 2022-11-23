@@ -271,9 +271,9 @@ module Reader : READER = struct
     let nt_curly_left = caten (char '{') (star nt_whitespace) in
     let nt_curly_right = caten (star nt_whitespace) (char '}') in
     let nt_final = caten (char '~') nt_curly_left in
-    let nt_final = caten nt_final nt_sexpr in
+    let nt_final = pack (caten nt_final nt_sexpr) (fun (_,exp) -> exp) in
     let nt_final = caten nt_final nt_curly_right in
-    let nt_final = pack nt_final (fun ((_,exp),_) -> ScmPair (ScmSymbol "format", ScmPair (ScmString "~a", ScmPair (Dynamic exp, ScmNil)))) in
+    let nt_final = pack nt_final (fun (exp,_) ->  ScmPair(ScmSymbol "format", ScmPair(ScmString "~a", ScmPair(exp, ScmNil)))) in
     nt_final str
 
   and nt_string_part_static str =
