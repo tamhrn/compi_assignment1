@@ -324,13 +324,19 @@ module Reader : READER = struct
     nt1 str
   and nt_vector str = raise X_not_yet_implemented
   and nt_list str = 
-    let right_bracket = caten nt_skip_star (caten (char ')') nt_skip_star) in
-    let left_bracket = caten nt_skip_star (caten (char '(') nt_skip_star) in
-    let nt_proper = caten_list [left_bracket;star (nt_sexpr);right_bracket] in
-    let nt_proper = pack nt_proper (fun (_,sexprs,_)->List.fold_right (fun car cdr -> ScmPair(car, cdr)) sexprs ScmNil) in
+    let right_bracket = char ')'in
+    let left_bracket = char '(' in
+    let nt_clean_star_sexprs = star (make_skipped_star nt_sexpr) in
+    let nt_proper = caten left_bracket nt_clean_star_sexprs in
+    let nt_proper = caten nt_proper right_bracket in
+    let nt_proper = pack nt_proper (fun ((_,sexprs),_) -> List.fold_right (fun car cdr -> ScmPair(car, cdr)) sexprs ScmNil) in
     let nt_dot = char '.' in
-    let nt_improper = caten_list [left_bracket;plus (nt_sexpr);nt_dot;nt_sexpr;right_bracket] in
-    let nt_improper = pack nt_improper (fun (_,sexprs,_,sexpr,_)-> List.fold_right (fun car cdr -> ScmPair(car, cdr)) sexprs sexpr) in
+    let nt_clean_plus_sexprs = plus (make_skipped_star nt_sexpr) in
+    let nt_improper = caten left_bracket nt_clean_plus_sexprs in
+    let nt_improper = caten nt_improper nt_dot in
+    let nt_improper = caten nt_improper nt_sexpr in
+    let nt_improper = caten nt_improper right_bracket in
+    let nt_improper = pack nt_improper (fun ((((_,sexprs),_),sexpr),_)-> List.fold_right (fun car cdr -> ScmPair(car, cdr)) sexprs sexpr ) in
     let nt_list_final = disj nt_proper nt_improper in
     nt_list_final str
     
