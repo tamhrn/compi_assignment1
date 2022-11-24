@@ -39,6 +39,10 @@ end;; (* end of READER signature *)
 
 module Reader : READER = struct
   open PC;;
+  let make_make_skipped_star nt_skip nt = 
+    let nt1 = caten nt_skip (caten nt nt_skip) in
+    let nt1 = pack nt1 (fun (_,(e,_)) -> e) in
+    nt1;;
 
   type string_part =
     | Static of string
@@ -61,7 +65,20 @@ module Reader : READER = struct
     let nt1 = caten nt1 nt_end_of_line_or_file in
     let nt1 = unitify nt1 in
     nt1 str
-  and nt_paired_comment str = raise X_not_yet_implemented
+  and nt_paired_comment str =
+    let bracket_curly_left = unitify (make_make_skipped_star nt_skip_star (char '{')) in
+    let bracket_curly_right = unitify (make_make_skipped_star nt_skip_star (char '}')) in
+    let nt_one_of = unitify (one_of "{}") in
+    let nt_nt_char = unitify nt_char in
+    let nt_nt_string = unitify nt_string in
+    let nt_nt_paired_comment = unitify nt_paired_comment in
+    let disj_list_for_diff = disj_list [nt_one_of; nt_nt_char; nt_nt_string; nt_nt_paired_comment] in
+    let nt_final = unitify (diff nt_any disj_list_for_diff) in
+    let nt_final = disj nt_final disj_list_for_diff in
+    let nt_final = unitify (star nt_final) in
+    let nt_final = caten_list [bracket_curly_left; nt_final;bracket_curly_right] in
+    let nt_final = unitify nt_final in
+    nt_final str
   and nt_sexpr_comment str = 
     let nt1 = caten (word "#;") nt_sexpr in
     let nt1 = pack nt1 (fun _ -> ()) in
@@ -322,23 +339,26 @@ module Reader : READER = struct
                          ScmNil in
                      ScmPair(ScmSymbol "string-append", argl)) in
     nt1 str
-  and nt_vector str = raise X_not_yet_implemented
-  and nt_list str = 
-    let right_bracket = char ')'in
-    let left_bracket = char '(' in
-    let nt_clean_star_sexprs = star (make_skipped_star nt_sexpr) in
-    let nt_proper = caten left_bracket nt_clean_star_sexprs in
-    let nt_proper = caten nt_proper right_bracket in
-    let nt_proper = pack nt_proper (fun ((_,sexprs),_) -> List.fold_right (fun car cdr -> ScmPair(car, cdr)) sexprs ScmNil) in
-    let nt_dot = char '.' in
-    let nt_clean_plus_sexprs = plus (make_skipped_star nt_sexpr) in
-    let nt_improper = caten left_bracket nt_clean_plus_sexprs in
-    let nt_improper = caten nt_improper nt_dot in
-    let nt_improper = caten nt_improper nt_sexpr in
-    let nt_improper = caten nt_improper right_bracket in
-    let nt_improper = pack nt_improper (fun ((((_,sexprs),_),sexpr),_)-> List.fold_right (fun car cdr -> ScmPair(car, cdr)) sexprs sexpr ) in
-    let nt_list_final = disj nt_proper nt_improper in
-    nt_list_final str
+  and nt_vector str = 
+    let nt1 = word "#(" in
+    let nt2 = star (make_make_skipped_star nt_skip_star nt_sexpr) in
+    let nt1 = caten nt1 nt2 in
+    let nt1 = caten nt1 (char ')') in
+    let nt1 = pack nt1 (fun ((_,sexprs),_) -> ScmVector sexprs) in
+    nt1 str
+  and nt_list str =                
+    let right_bracket = make_make_skipped_star nt_skip_star (char ')')in
+    let left_bracket =  make_make_skipped_star nt_skip_star (char '(') in
+    let nt1 = pack (caten (char '.') nt_sexpr) (fun (_,sexpr) -> sexpr) in
+    let nt1 = pack (maybe nt1) (fun me ->
+      match me with
+      | None -> ScmNil
+      | Some (sexpr)-> sexpr)in
+    let nt_lists = caten left_bracket (star nt_sexpr) in
+    let nt_lists = caten nt_lists nt1 in
+    let nt_lists = caten nt_lists right_bracket in
+    let nt_lists = pack nt_lists (fun (((_,sexprs),last),_) -> List.fold_right (fun car cdr -> ScmPair(car, cdr)) sexprs last) in
+    nt_lists str
     
   and make_quoted_form nt_qf qf_name =
     let nt1 = caten nt_qf nt_sexpr in
@@ -360,7 +380,7 @@ module Reader : READER = struct
     let nt1 =
       disj_list [nt_void; nt_number; nt_boolean; nt_char; nt_symbol;
                  nt_string; nt_vector; nt_list; nt_quoted_forms] in
-    let nt1 = make_skipped_star nt1 in
+    let nt1 = make_make_skipped_star nt_skip_star nt1 in
     nt1 str;;
 
   let rec string_of_sexpr = function
