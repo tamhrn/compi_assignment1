@@ -342,7 +342,7 @@ module Reader : READER = struct
                      ScmPair(ScmSymbol "string-append", argl)) in
     nt1 str
   and nt_vector str = 
-    let nt1 = word "#(" in
+    let nt1 = make_make_skipped_star nt_skip_star (word "#(") in
     let nt2 = star (make_make_skipped_star nt_skip_star nt_sexpr) in
     let nt1 = caten nt1 nt2 in
     let nt1 = caten nt1 (char ')') in
