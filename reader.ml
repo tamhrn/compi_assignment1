@@ -66,8 +66,8 @@ module Reader : READER = struct
     let nt1 = unitify nt1 in
     nt1 str
   and nt_paired_comment str =
-    let bracket_curly_left = unitify (make_make_skipped_star nt_skip_star (char '{')) in
-    let bracket_curly_right = unitify (make_make_skipped_star nt_skip_star (char '}')) in
+    let bracket_curly_left = unitify (char '{') in
+    let bracket_curly_right = unitify (char '}') in
     let nt_one_of = unitify (one_of "{}") in
     let nt_nt_char = unitify nt_char in
     let nt_nt_string = unitify nt_string in
@@ -136,11 +136,13 @@ module Reader : READER = struct
                     digits) in
     nt1 str
   and nt_optional_sign str = 
-    let ntPlus = char '+' in
-    let ntMinus = char '-' in
+    let ntPlus = pack (char '+') (fun e -> true) in
+    let ntMinus = pack (char '-') (fun e -> false) in
     let nt = maybe (disj ntPlus ntMinus) in
     let nt = pack nt (fun sign -> 
-                        if (sign != Some '-') then true else false) in
+                        match sign with
+                        | None -> true
+                        | Some(boole) -> boole) in
     nt str
   and nt_int str =
     let nt1 = caten nt_optional_sign nt_nat in
