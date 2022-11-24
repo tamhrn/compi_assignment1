@@ -380,7 +380,7 @@ module Reader : READER = struct
     let nt1 =
       disj_list [nt_void; nt_number; nt_boolean; nt_char; nt_symbol;
                  nt_string; nt_vector; nt_list; nt_quoted_forms] in
-    let nt1 = make_make_skipped_star nt_skip_star nt1 in
+    let nt1 = make_skipped_star nt_skip_star nt1 in
     nt1 str;;
 
   let rec string_of_sexpr = function
