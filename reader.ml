@@ -74,7 +74,8 @@ module Reader : READER = struct
     let nt_nt_paired_comment = unitify nt_paired_comment in
     let disj_list_for_diff = disj_list [nt_one_of; nt_nt_char; nt_nt_string; nt_nt_paired_comment] in
     let nt_final = unitify (diff nt_any disj_list_for_diff) in
-    let nt_final = disj nt_final disj_list_for_diff in
+    let disj_list_for_disj = disj_list [nt_nt_char;nt_nt_string;nt_nt_paired_comment] in 
+    let nt_final = disj nt_final disj_list_for_disj in 
     let nt_final = unitify (star nt_final) in
     let nt_final = caten_list [bracket_curly_left; nt_final;bracket_curly_right] in
     let nt_final = unitify nt_final in
@@ -199,13 +200,13 @@ module Reader : READER = struct
   and nt_float str =
     let ntChar = char '.' in
     let ntA = pack (caten nt_integer_part ntChar) (fun (num,_) -> num) in
-    let maybe_mantissa = pack (maybe nt_mantissa) (fun me ->
-      match me with
+    let maybe_mantissa = pack (maybe nt_mantissa) (fun exp ->
+      match exp with
       | None -> 0.0
       | Some(mantisaPart) -> mantisaPart) in
     let ntA = pack (caten ntA maybe_mantissa) (fun (intPart,mantisPart) -> intPart +. mantisPart) in
-    let maybe_exponent = pack (maybe nt_exponent) (fun me ->
-      match me with
+    let maybe_exponent = pack (maybe nt_exponent) (fun exp ->
+      match exp with
       | None -> 1.0
       | Some(exponentPart) -> exponentPart) in
     let ntA = pack (caten ntA maybe_exponent) (fun (floatNum,expPart) -> floatNum *. expPart) in
@@ -352,8 +353,8 @@ module Reader : READER = struct
     let right_bracket = make_make_skipped_star nt_skip_star (char ')')in
     let left_bracket =  make_make_skipped_star nt_skip_star (char '(') in
     let nt1 = pack (caten (char '.') nt_sexpr) (fun (_,sexpr) -> sexpr) in
-    let nt1 = pack (maybe nt1) (fun me ->
-      match me with
+    let nt1 = pack (maybe nt1) (fun exp ->
+      match exp with
       | None -> ScmNil
       | Some (sexpr)-> sexpr)in
     let nt_lists = caten left_bracket (star nt_sexpr) in
