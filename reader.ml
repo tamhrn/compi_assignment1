@@ -343,25 +343,25 @@ module Reader : READER = struct
                      ScmPair(ScmSymbol "string-append", argl)) in
     nt1 str
   and nt_vector str = 
-    let nt1 = make_make_skipped_star nt_skip_star (word "#(") in
-    let nt2 = star (make_make_skipped_star nt_skip_star nt_sexpr) in
-    let nt1 = caten nt1 nt2 in
-    let nt1 = caten nt1 (char ')') in
-    let nt1 = pack nt1 (fun ((_,sexprs),_) -> ScmVector sexprs) in
-    nt1 str
+    let nt_start_vector = make_make_skipped_star nt_skip_star (word "#(") in
+    let nt_clean_sexp = star (make_make_skipped_star nt_skip_star nt_sexpr) in
+    let nt_start_vector = caten nt_start_vector nt_clean_sexp in
+    let nt_start_vector = caten nt_start_vector (char ')') in
+    let nt_start_vector = pack nt_start_vector (fun ((_,sexprs),_) -> ScmVector sexprs) in
+    nt_start_vector str
   and nt_list str =                
-    let right_bracket = make_make_skipped_star nt_skip_star (char ')')in
-    let left_bracket =  make_make_skipped_star nt_skip_star (char '(') in
-    let nt1 = pack (caten (char '.') nt_sexpr) (fun (_,sexpr) -> sexpr) in
-    let nt1 = pack (maybe nt1) (fun exp ->
+    let right_brac = make_make_skipped_star nt_skip_star (char ')')in
+    let left_brac =  make_make_skipped_star nt_skip_star (char '(') in
+    let nt_dot = pack (caten (char '.') nt_sexpr) (fun (_,sexpr) -> sexpr) in
+    let nt_dot = pack (maybe nt_dot) (fun exp ->
       match exp with
       | None -> ScmNil
       | Some (sexpr)-> sexpr)in
-    let nt_lists = caten left_bracket (star nt_sexpr) in
-    let nt_lists = caten nt_lists nt1 in
-    let nt_lists = caten nt_lists right_bracket in
-    let nt_lists = pack nt_lists (fun (((_,sexprs),last),_) -> List.fold_right (fun car cdr -> ScmPair(car, cdr)) sexprs last) in
-    nt_lists str
+    let nt_final = caten left_brac (star nt_sexpr) in
+    let nt_final = caten nt_final nt_dot in
+    let nt_final = caten nt_final right_brac in
+    let nt_final = pack nt_final (fun (((_,sexprs),last),_) -> List.fold_right (fun car cdr -> ScmPair(car, cdr)) sexprs last) in
+    nt_final str
     
   and make_quoted_form nt_qf qf_name =
     let nt1 = caten nt_qf nt_sexpr in
